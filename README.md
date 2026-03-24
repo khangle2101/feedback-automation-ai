@@ -19,7 +19,7 @@
 
 ### Google Sheets - Kết quả phân loại AI
 <p align="center">
-  <img src="docs/screenshots/02-sheet-responses.jpg" width="80%" alt="Sheet Responses"/>
+  <img src="docs/screenshots/02-sheet-responses.jpg" width="100%" alt="Sheet Responses"/>
 </p>
 
 ### System Logs - Nhật ký hệ thống
