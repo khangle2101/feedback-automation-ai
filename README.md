@@ -22,9 +22,19 @@
   <img src="docs/screenshots/02-sheet-responses.jpg" width="80%" alt="Sheet Responses"/>
 </p>
 
+### System Logs - Nhật ký hệ thống
+<p align="center">
+  <img src="docs/screenshots/03-sheet-logs.jpg" width="80%" alt="System Logs"/>
+</p>
+
 ### n8n Workflow - Automation Flow
 <p align="center">
   <img src="docs/screenshots/04-n8n-workflow.jpg" width="80%" alt="n8n Workflow"/>
+</p>
+
+### n8n Execution - Kết quả chạy workflow
+<p align="center">
+  <img src="docs/screenshots/05-n8n-execution.jpg" width="80%" alt="n8n Execution"/>
 </p>
 
 ### Telegram Alerts - Thông báo real-time
@@ -35,6 +45,16 @@
 ### Email Confirmation - Xác nhận tự động
 <p align="center">
   <img src="docs/screenshots/07-email-confirmation.jpg" width="70%" alt="Email Confirmation"/>
+</p>
+
+### Email Draft - Mẫu phản hồi tự động
+<p align="center">
+  <img src="docs/screenshots/08-email-draft.jpg" width="70%" alt="Email Draft"/>
+</p>
+
+### Google Drive Backup - Sao lưu dữ liệu
+<p align="center">
+  <img src="docs/screenshots/09-drive-backup.jpg" width="70%" alt="Google Drive Backup"/>
 </p>
 
 ---
