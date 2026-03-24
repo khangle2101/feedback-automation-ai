@@ -110,7 +110,7 @@ build/
 # ============================================
 # BACKUP FILES (keep in separate backup)
 # ============================================
-*-backup.*
+*.backup
 *.old
 backups/
 
