@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n-feedback-automation
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # Basic Auth (optional - recommended for security)
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=your_secure_password_here
+      
+      # Timezone
+      - GENERIC_TIMEZONE=Asia/Ho_Chi_Minh
+      - TZ=Asia/Ho_Chi_Minh
+      
+      # Webhook URL (update when using ngrok)
+      - WEBHOOK_URL=https://your-ngrok-url.ngrok-free.dev
+      
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:
+    driver: local
+
+# ===========================================
+# USAGE:
+# ===========================================
+# 
+# Start n8n:
+#   docker-compose up -d
+#
+# Stop n8n:
+#   docker-compose down
+#
+# View logs:
+#   docker-compose logs -f
+#
+# Access n8n:
+#   http://localhost:5678
+#
+# ===========================================

@@ -1,0 +1,149 @@
+{
+  "name": "Feedback Automation System v7",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "feedback-webhook",
+        "responseMode": "responseNode"
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_OPENROUTER_API_KEY_HERE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"stepfun/step-3.5-flash:free\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an AI that analyzes customer feedback. Classify and evaluate sentiment.\\n\\nRules:\\n- POSITIVE: satisfied, praise (satisfaction >= 4)\\n- NEGATIVE: complaint, unsatisfied (satisfaction <= 2)\\n- TECHNICAL: questions, support requests\\n- NEUTRAL: neutral (satisfaction = 3)\\n\\nRespond with ONLY JSON, no markdown:\\n{\\\"classification\\\": \\\"POSITIVE|NEGATIVE|TECHNICAL|NEUTRAL\\\", \\\"sentimentScore\\\": 1-10, \\\"summary\\\": \\\"brief\\\", \\\"suggestedAction\\\": \\\"action\\\", \\\"priority\\\": \\\"HIGH|MEDIUM|LOW\\\"}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Customer: {{ $json.body.fullName }}\\nEmail: {{ $json.body.email }}\\nType: {{ $json.body.feedbackType }}\\nSatisfaction: {{ $json.body.satisfactionLevel }}/5\\nContent: {{ $json.body.feedbackContent }}\"\n    }\n  ],\n  \"temperature\": 0.1,\n  \"max_tokens\": 200\n}"
+      },
+      "id": "2",
+      "name": "AI Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResponse = $input.first().json;\nconst originalData = $('Webhook').first().json.body;\n\nlet classification = 'NEUTRAL';\nlet sentimentScore = 5;\nlet summary = 'Processing';\nlet suggestedAction = 'Review';\nlet priority = 'MEDIUM';\n\ntry {\n  const content = aiResponse.choices[0].message.content;\n  const cleanContent = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  const parsed = JSON.parse(cleanContent);\n  classification = parsed.classification || 'NEUTRAL';\n  sentimentScore = parsed.sentimentScore || 5;\n  summary = parsed.summary || 'No summary';\n  suggestedAction = parsed.suggestedAction || 'No action';\n  priority = parsed.priority || 'MEDIUM';\n} catch (error) {\n  const satisfaction = parseInt(originalData.satisfactionLevel) || 3;\n  if (satisfaction <= 2) {\n    classification = 'NEGATIVE';\n    sentimentScore = satisfaction * 2;\n    priority = 'HIGH';\n    summary = 'Negative feedback';\n  } else if (satisfaction >= 4) {\n    classification = 'POSITIVE';\n    sentimentScore = satisfaction * 2;\n    priority = 'LOW';\n    summary = 'Positive feedback';\n  }\n}\n\nreturn {\n  json: {\n    fullName: originalData.fullName || '',\n    email: originalData.email || '',\n    phone: originalData.phone || '',\n    feedbackContent: originalData.feedbackContent || '',\n    satisfactionLevel: originalData.satisfactionLevel || 3,\n    feedbackType: originalData.feedbackType || '',\n    classification: classification,\n    sentimentScore: sentimentScore,\n    summary: summary,\n    suggestedAction: suggestedAction,\n    priority: priority\n  }\n};"
+      },
+      "id": "3",
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/botYOUR_TELEGRAM_BOT_TOKEN_HERE/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\": \"YOUR_TELEGRAM_CHAT_ID_HERE\",\n  \"parse_mode\": \"HTML\",\n  \"text\": \"{{ $json.classification === 'NEGATIVE' ? '🚨 URGENT' : $json.classification === 'POSITIVE' ? '✅ POSITIVE' : '📋 INFO' }} <b>Feedback</b>\\n\\n👤 {{ $json.fullName }}\\n📧 {{ $json.email }}\\n📊 Satisfaction: {{ $json.satisfactionLevel }}/5\\n\\n📝 {{ $json.feedbackContent }}\\n\\n🤖 AI: {{ $json.classification }} | Score: {{ $json.sentimentScore }}/10 | Priority: {{ $json.priority }}\"\n}"
+      },
+      "id": "4",
+      "name": "Send Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lấy data từ Parse Response node (không phải từ Telegram response)\nconst parsedData = $('Parse Response').first().json;\n\nreturn {\n  json: {\n    success: true,\n    classification: parsedData.classification,\n    sentimentScore: parsedData.sentimentScore\n  }\n};"
+      },
+      "id": "5",
+      "name": "Prepare Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "6",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1440, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Analysis": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Telegram": {
+      "main": [
+        [
+          {
+            "node": "Prepare Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Response": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
